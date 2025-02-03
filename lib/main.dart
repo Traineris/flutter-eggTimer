@@ -36,6 +36,12 @@ class _EggTimerScreenState extends State<EggTimerScreen>
   bool isPaused = false;
   final TextEditingController _timeController = TextEditingController();
 
+  String formatTime(int seconds) {
+    int minutes = seconds ~/ 60; // Pembagian bulat untuk menit
+    int remainingSeconds = seconds % 60; // Sisa detik
+    return "${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}";
+  }
+
   @override
   void initState() {
     super.initState();
@@ -92,29 +98,91 @@ class _EggTimerScreenState extends State<EggTimerScreen>
   }
 
   void _playAlarm() async {
-    await _audioPlayer.play(AssetSource('alarm.mp3'));
+    await _audioPlayer.play(AssetSource('assets/sounds/alarm.ogg'));
   }
 
   void _showDialog(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Timer Finished'),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                setState(() {
-                  selectedTime = 20;
-                  _controller.duration = Duration(seconds: selectedTime);
-                  isRunning = false;
-                });
-              },
-              child: Text('Selesai'),
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Sudut lebih bulat
+          ),
+          elevation: 5,
+          child: Container(
+            padding: EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color.fromARGB(255, 254, 204, 129),
+                  const Color.fromARGB(255, 255, 180, 59)
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ), // Gradient color untuk background dialog
+              borderRadius: BorderRadius.circular(20),
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Menambahkan gambar lucu sebagai pengganti ikon
+                Image.asset(
+                  '/images/done.png', // Ganti dengan path gambar sesuai kebutuhan
+                  width: 100,
+                  height: 100,
+                ),
+                SizedBox(height: 15),
+                // Menambahkan pesan
+                Text(
+                  'Ambil Telurnya Sekarang !',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white70,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+                // Menambahkan tombol dengan desain yang lebih playful
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    setState(() {
+                      selectedTime = 20;
+                      _controller.duration = Duration(seconds: selectedTime);
+                      isRunning = false;
+                    });
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    shadowColor: Colors.orange.withOpacity(0.5),
+                    elevation: 5,
+                  ),
+                  child: Text(
+                    'Selesai',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -174,13 +242,50 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                   width: 100,
                   height: 100,
                 ),
-                SizedBox(height: 15),
-                Text(
-                  "$selectedTime s",
-                  style: TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange[700],
+                SizedBox(height: 20),
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+                  decoration: BoxDecoration(
+                    color: const Color.fromARGB(255, 255, 216, 144),
+                    borderRadius: BorderRadius.circular(40),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.orange.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 3,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedSwitcher(
+                        duration: Duration(
+                            milliseconds:
+                                500), // Durasi lebih panjang agar transisi terlihat lebih halus
+                        transitionBuilder: (child, animation) {
+                          // Menggunakan SlideTransition untuk memberi efek pergeseran angka
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: Offset(0, 1), // Mulai dari bawah
+                              end: Offset(0, 0), // Berhenti di posisi semula
+                            ).animate(animation),
+                            child: child,
+                          );
+                        },
+                        child: Text(
+                          formatTime(selectedTime), // Format waktu
+                          key: ValueKey<int>(selectedTime),
+                          style: TextStyle(
+                            fontSize: 60,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.orange[500],
+                            fontFamily: 'Digital',
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 20),
@@ -197,11 +302,14 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: setCustomTime,
-                  child: Text("Set Time"),
+                  child: Text("Set Time",
+                      style: TextStyle(
+                          color: const Color.fromARGB(255, 219, 147, 30))),
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    backgroundColor: const Color.fromARGB(255, 243, 210, 160),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(50),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -217,10 +325,19 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                               Duration(seconds: selectedTime);
                         });
                       },
-                      child: Image.asset(
-                        '/images/soft.png',
-                        width: 100,
-                        height: 100,
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange
+                              .withOpacity(0.2), // Background color di sini
+                          borderRadius: BorderRadius.circular(
+                              15), // Radius border agar lebih soft
+                        ),
+                        child: Image.asset(
+                          '/images/soft.png',
+                          width: 100,
+                          height: 80,
+                        ),
                       ),
                     ),
                     SizedBox(width: 20),
@@ -232,10 +349,19 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                               Duration(seconds: selectedTime);
                         });
                       },
-                      child: Image.asset(
-                        '/images/medium.png',
-                        width: 100,
-                        height: 100,
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange
+                              .withOpacity(0.2), // Background color di sini
+                          borderRadius: BorderRadius.circular(
+                              15), // Radius border agar lebih soft
+                        ),
+                        child: Image.asset(
+                          '/images/medium.png',
+                          width: 100,
+                          height: 80,
+                        ),
                       ),
                     ),
                     SizedBox(width: 20),
@@ -247,10 +373,19 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                               Duration(seconds: selectedTime);
                         });
                       },
-                      child: Image.asset(
-                        '/images/hard.png',
-                        width: 100,
-                        height: 180,
+                      child: Container(
+                        padding: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.orange
+                              .withOpacity(0.2), // Background color di sini
+                          borderRadius: BorderRadius.circular(
+                              15), // Radius border agar lebih soft
+                        ),
+                        child: Image.asset(
+                          '/images/hard.png',
+                          width: 100,
+                          height: 80,
+                        ),
                       ),
                     ),
                   ],
@@ -260,23 +395,75 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (isRunning)
-                      IconButton(
-                        onPressed: pauseTimer,
-                        icon: Icon(Icons.pause, size: 40),
-                        color: Colors.orange,
+                      GestureDetector(
+                        onTap: pauseTimer,
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 251, 191, 100)
+                                .withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.orange.withOpacity(0.6),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.pause,
+                            size: 40,
+                            color: const Color.fromARGB(255, 255, 162, 23),
+                          ),
+                        ),
                       ),
                     if (isPaused)
-                      IconButton(
-                        onPressed: resumeTimer,
-                        icon: Icon(Icons.play_arrow, size: 40),
-                        color: Colors.green,
+                      GestureDetector(
+                        onTap: resumeTimer,
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.6),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.play_arrow,
+                            size: 40,
+                            color: Colors.green,
+                          ),
+                        ),
                       ),
                     SizedBox(width: 10),
                     if (isRunning || isPaused)
-                      IconButton(
-                        onPressed: cancelTimer,
-                        icon: Icon(Icons.stop, size: 40),
-                        color: Colors.red,
+                      GestureDetector(
+                        onTap: cancelTimer,
+                        child: Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.red.withOpacity(0.6),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.stop,
+                            size: 40,
+                            color: Colors.red,
+                          ),
+                        ),
                       ),
                   ],
                 ),
