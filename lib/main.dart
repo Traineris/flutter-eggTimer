@@ -164,16 +164,21 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                 Text(
                   "Egg Timer",
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.orange[700],
                   ),
                 ),
-                SizedBox(height: 20),
+                Image.asset(
+                  '/images/start.png',
+                  width: 100,
+                  height: 100,
+                ),
+                SizedBox(height: 15),
                 Text(
                   "$selectedTime s",
                   style: TextStyle(
-                    fontSize: 70,
+                    fontSize: 50,
                     fontWeight: FontWeight.bold,
                     color: Colors.orange[700],
                   ),
@@ -200,7 +205,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -229,8 +234,8 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                       },
                       child: Image.asset(
                         '/images/medium.png',
-                        width: 60,
-                        height: 60,
+                        width: 100,
+                        height: 100,
                       ),
                     ),
                     SizedBox(width: 20),
@@ -244,13 +249,13 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                       },
                       child: Image.asset(
                         '/images/hard.png',
-                        width: 60,
-                        height: 60,
+                        width: 100,
+                        height: 180,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -280,7 +285,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                   onPressed: isRunning || isPaused ? null : startTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange[400],
-                    padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(50)),
                     shadowColor: Colors.black.withOpacity(0.5),
