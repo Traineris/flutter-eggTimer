@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(EggTimerApp());
@@ -35,12 +36,21 @@ class _EggTimerScreenState extends State<EggTimerScreen>
   bool isRunning = false;
   bool isPaused = false;
   final TextEditingController _timeController = TextEditingController();
+  late VideoPlayerController _videoController;
 
   String formatTime(int seconds) {
     int minutes = seconds ~/ 60; // Pembagian bulat untuk menit
     int remainingSeconds = seconds % 60; // Sisa detik
     return "${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}";
   }
+
+  final TextStyle timerTextStyle = TextStyle(
+    fontSize: 30,
+    fontWeight: FontWeight.w700,
+    color: Colors.orange[500],
+    fontFamily: 'Digital',
+    letterSpacing: 3,
+  );
 
   @override
   void initState() {
@@ -49,6 +59,10 @@ class _EggTimerScreenState extends State<EggTimerScreen>
       vsync: this,
       duration: Duration(seconds: selectedTime),
     );
+    _videoController = VideoPlayerController.asset("assets/images/progres.gif")
+      ..initialize().then((_) {
+        setState(() {}); // Refresh UI setelah video siap
+      });
   }
 
   void startTimer() {
@@ -70,6 +84,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
     });
     setState(() {
       isRunning = true;
+      _videoController.play();
       isPaused = false;
     });
   }
@@ -79,6 +94,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
     _controller.stop();
     setState(() {
       isRunning = false;
+      _videoController.pause();
       isPaused = true;
     });
   }
@@ -98,7 +114,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
   }
 
   void _playAlarm() async {
-    await _audioPlayer.play(AssetSource('assets/sounds/alarm.ogg'));
+    await _audioPlayer.play(AssetSource('/sounds/alarm.ogg'));
   }
 
   void _showDialog(String message) {
@@ -203,6 +219,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
     _timer?.cancel();
     _controller.dispose();
     _audioPlayer.dispose();
+    _videoController.dispose();
     super.dispose();
   }
 
@@ -237,52 +254,159 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                     color: Colors.orange[700],
                   ),
                 ),
-                Image.asset(
-                  '/images/start.png',
-                  width: 100,
-                  height: 100,
+                AnimatedSwitcher(
+                  duration: Duration(milliseconds: 500),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(opacity: animation, child: child);
+                  },
+                  child: isRunning
+                      ? Container(
+                          key: ValueKey(1),
+                          width: 150,
+                          height: 150,
+                          child: _videoController.value.isInitialized
+                              ? AspectRatio(
+                                  aspectRatio:
+                                      _videoController.value.aspectRatio,
+                                  child: VideoPlayer(_videoController),
+                                )
+                              : CircularProgressIndicator(), // Loader jika video belum siap
+                        )
+                      : Image.asset(
+                          '/images/start.png',
+                          key: ValueKey(2),
+                          width: 150,
+                          height: 150,
+                        ),
                 ),
                 SizedBox(height: 20),
                 Container(
-                  padding: EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+                  width: 200, // Sesuaikan ukuran yang diinginkan
+                  height: 50,
+                  padding: EdgeInsets.all(
+                      6), // Padding tetap kecil agar isi tidak terlalu besar
                   decoration: BoxDecoration(
-                    color: const Color.fromARGB(255, 255, 216, 144),
-                    borderRadius: BorderRadius.circular(40),
+                    color: const Color.fromARGB(255, 239, 197, 114),
+                    borderRadius: BorderRadius.circular(
+                        30), // Sesuaikan dengan ukuran baru
                     boxShadow: [
                       BoxShadow(
                         color: Colors.orange.withOpacity(0.3),
-                        blurRadius: 15,
-                        spreadRadius: 3,
+                        blurRadius: 8,
+                        spreadRadius: 2,
                       ),
                     ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // MENIT (PULUHAN)
                       AnimatedSwitcher(
-                        duration: Duration(
-                            milliseconds:
-                                500), // Durasi lebih panjang agar transisi terlihat lebih halus
+                        duration: Duration(milliseconds: 200),
                         transitionBuilder: (child, animation) {
-                          // Menggunakan SlideTransition untuk memberi efek pergeseran angka
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: Offset(0, 1), // Mulai dari bawah
-                              end: Offset(0, 0), // Berhenti di posisi semula
-                            ).animate(animation),
-                            child: child,
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(0, 0.1),
+                                end: Offset(0, 0),
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.decelerate,
+                              )),
+                              child: child,
+                            ),
                           );
                         },
                         child: Text(
-                          formatTime(selectedTime), // Format waktu
-                          key: ValueKey<int>(selectedTime),
-                          style: TextStyle(
-                            fontSize: 60,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.orange[500],
-                            fontFamily: 'Digital',
-                            letterSpacing: 3,
-                          ),
+                          formatTime(selectedTime)[
+                              0], // Ambil digit pertama (puluhan menit)
+                          key: ValueKey<String>(formatTime(selectedTime)[0]),
+                          style: timerTextStyle,
+                        ),
+                      ),
+
+                      // MENIT (SATUAN)
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(0, 0.1),
+                                end: Offset(0, 0),
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.decelerate,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          formatTime(selectedTime)[
+                              1], // Ambil digit kedua (satuan menit)
+                          key: ValueKey<String>(formatTime(selectedTime)[1]),
+                          style: timerTextStyle,
+                        ),
+                      ),
+
+                      // TANDA TITIK DUA ":"
+                      Text(
+                        ":", // Titik dua tetap statis
+                        style: timerTextStyle,
+                      ),
+
+                      // DETIK (PULUHAN)
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(0, 0.1),
+                                end: Offset(0, 0),
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.decelerate,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          formatTime(selectedTime)[
+                              3], // Ambil digit ketiga (puluhan detik)
+                          key: ValueKey<String>(formatTime(selectedTime)[3]),
+                          style: timerTextStyle,
+                        ),
+                      ),
+
+                      // DETIK (SATUAN)
+                      AnimatedSwitcher(
+                        duration: Duration(milliseconds: 200),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: Offset(0, 0.1),
+                                end: Offset(0, 0),
+                              ).animate(CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.decelerate,
+                              )),
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: Text(
+                          formatTime(selectedTime)[
+                              4], // Ambil digit keempat (satuan detik)
+                          key: ValueKey<String>(formatTime(selectedTime)[4]),
+                          style: timerTextStyle,
                         ),
                       ),
                     ],
@@ -304,7 +428,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                   onPressed: setCustomTime,
                   child: Text("Set Time",
                       style: TextStyle(
-                          color: const Color.fromARGB(255, 219, 147, 30))),
+                          color: const Color.fromARGB(255, 255, 157, 0))),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 243, 210, 160),
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -329,7 +453,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.orange
-                              .withOpacity(0.2), // Background color di sini
+                              .withOpacity(0.5), // Background color di sini
                           borderRadius: BorderRadius.circular(
                               15), // Radius border agar lebih soft
                         ),
@@ -353,7 +477,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.orange
-                              .withOpacity(0.2), // Background color di sini
+                              .withOpacity(0.5), // Background color di sini
                           borderRadius: BorderRadius.circular(
                               15), // Radius border agar lebih soft
                         ),
@@ -377,7 +501,7 @@ class _EggTimerScreenState extends State<EggTimerScreen>
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.orange
-                              .withOpacity(0.2), // Background color di sini
+                              .withOpacity(0.5), // Background color di sini
                           borderRadius: BorderRadius.circular(
                               15), // Radius border agar lebih soft
                         ),
